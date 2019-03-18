@@ -39,10 +39,79 @@ func Empty(value interface{}) bool {
     return false
 }
 
+// return a list of elements that ONLY in a
+func Difference(a interface{}, b interface{}) (result []interface{}) {
+    result = []interface{}{}
+
+    aValue := reflect.ValueOf(a)
+    bValue := reflect.ValueOf(b)
+
+    switch reflect.TypeOf(a).Kind() {
+    case reflect.Slice, reflect.Array:
+
+        mark := make(map[interface{}]bool)
+
+        for i := 0; i < aValue.Len(); i++ {
+            mark[aValue.Index(i).Interface()] = true
+        }
+
+        for i := 0; i < bValue.Len(); i++ {
+            key := bValue.Index(i).Interface()
+            if _, ok := mark[key]; ok {
+                mark[key] = false
+            }
+        }
+
+        for k, v := range mark {
+            if v == true {
+                result = append(result, k)
+            }
+        }
+    default:
+        return 
+    } // switch 
+
+    return
+}
+
+// return a list of elements that BOTH in a and b
+func Intersection(a interface{}, b interface{}) (result []interface{}) {
+    result = []interface{}{}
+
+    aValue := reflect.ValueOf(a)
+    bValue := reflect.ValueOf(b)
+
+    switch reflect.TypeOf(a).Kind() {
+    case reflect.Slice, reflect.Array:
+        mark := make(map[interface{}]bool)
+
+        for i := 0; i < aValue.Len(); i++ {
+            mark[aValue.Index(i).Interface()] = false
+        }
+        for i := 0; i < bValue.Len(); i++ {
+            key := bValue.Index(i).Interface()
+            if _, ok := mark[key]; ok {
+                mark[key] = true
+            }
+        }
+
+        for k, v := range mark {
+            if v == true {
+                result = append(result, k)
+            }
+        }
+    default:
+        return 
+    } // switch 
+
+    return
+}
+
 //判断某一个值是否在列表(支持 slice, array, map)中
 func InList(needle interface{}, haystack interface{}) bool {
     //interface{}和interface{}可以进行比较，但是interface{}不可进行遍历
     hayValue := reflect.ValueOf(haystack)
+
     switch reflect.TypeOf(haystack).Kind() {
     case reflect.Slice, reflect.Array:
         //slice, array类型
@@ -92,7 +161,7 @@ func InListIndex(needle interface{}, haystack interface{}) int {
 }
 
 //string转int
-func StrToInt(str string) int {
+func Int(str string) int {
     intval, _ := strconv.Atoi(str)
     return intval
 }
@@ -351,7 +420,7 @@ func AutoFilling(l, num int) string {
     for i := 1; i <= l; i++ {
         base += "0"
     }
-    newNum := StrToInt(base) + num
+    newNum := Int(base) + num
     newNumStr := strconv.Itoa(newNum)
     return SubString(newNumStr, 1, len(newNumStr))
 }

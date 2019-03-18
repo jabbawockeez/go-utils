@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"log"
 	"unicode"
 	//"errors"
 	"strconv"
@@ -10,6 +11,8 @@ import (
     "path"
 	"github.com/axgle/mahonia"
 	"strings"
+    
+    "github.com/astaxie/beego/logs"
 )
 
 //src为要转换的字符串，srcCode为待转换的编码格式，targetCode为要转换的编码格式
@@ -27,16 +30,26 @@ func Mute(a ...interface{}) []interface{} {
 	return a
 }
 
-func GenURL(args ...string) string {
-    u, err := url.Parse(args[0])
+func GenURL(args ...interface{}) string {
+    var args_str = make([]string, len(args))
+    for i, v := range args {
+        args_str[i] = Str(v)
+    }
+
+    u, err := url.Parse(args_str[0])
     if err != nil {
         fmt.Println(err)
     }
 
-    p := path.Join(args[1:]...)
+    p := path.Join(args_str[1:]...)
     u.Path = path.Join(u.Path, p)
 
-    return u.String()
+    result, err := url.PathUnescape(u.String())
+    if err != nil {
+        panic(err)
+    }
+
+    return result
 }
 
 func StructToMap(s interface{}) map[string]interface{} {
@@ -61,32 +74,45 @@ func EscapeRegex(src string) string {
     return res
 }
 
-func Concat(args ...interface{}) string {
-    var s string
+func Join(sep string, args ...interface{}) string {
+    /*
+        return a string that join 
+        every argument passed in, 
+        no matter what type they were.
+    */
+
+    s := []string{}
     
     for _, i := range args {
-        s += Str(i)
-        // switch i.(type) {
-        // case int:
-        //     s += strconv.Itoa(i.(int))
-        // case []byte:
-        //     s += string(i.([]byte))
-        // case string:
-        //     s += i.(string)
-        // }
+        s = append(s, Str(i))
     }
-    return s
+
+    return strings.Join(s, sep)
 }
 
-func Str(v interface{}) string {
+func Str(val interface{}) string {
     var s string
 
-    switch v.(type) {
+    switch val.(type) {
     case int:
-         s = strconv.Itoa(v.(int))
+        s = strconv.Itoa(val.(int))
     case []byte:
-         s = string(v.([]byte))
+        s = string(val.([]byte))
+    default:
+        s = fmt.Sprintf("%v", val)
     }
 
     return s
 }
+
+// print
+func P(args ...interface{}) {
+    //log.Println(args...)
+    logs.Info(args)
+}
+
+// printf
+func Pf(fmt string, args ...interface{}) {
+    log.Printf(fmt, args...)
+}
+
